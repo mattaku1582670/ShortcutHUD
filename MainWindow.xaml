@@ -1,0 +1,195 @@
+﻿<Window x:Class="ShortcutHUD.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:models="clr-namespace:ShortcutHUD.Models"
+        mc:Ignorable="d"
+        Title="ShortcutHUD"
+        Width="320"
+        Height="34"
+        Topmost="True"
+        WindowStyle="None"
+        ResizeMode="NoResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <Grid Margin="6">
+        <Border x:Name="HeaderBorder"
+                CornerRadius="8"
+                Padding="10,4"
+                Background="#E6DDE6EC"
+                BorderBrush="#FFB7C5D2"
+                BorderThickness="1"
+                MouseEnter="HeaderBorder_MouseEnter"
+                MouseLeave="HeaderBorder_MouseLeave"
+                MouseLeftButtonDown="HeaderBorder_MouseLeftButtonDown">
+
+            <Border.ContextMenu>
+                <ContextMenu x:Name="HudContextMenu"
+                             Opened="HudContextMenu_Opened">
+                    <MenuItem x:Name="PinToggleMenuItem"
+                              Header="ピン留め: OFF"
+                              Click="PinToggleMenuItem_Click"/>
+
+                    <MenuItem Header="透明度">
+                        <MenuItem StaysOpenOnClick="True">
+                            <MenuItem.Header>
+                                <StackPanel Orientation="Horizontal" Margin="4">
+                                    <TextBlock Text="20%" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                    <Slider x:Name="OpacityMenuSlider"
+                                            Width="140"
+                                            Minimum="20"
+                                            Maximum="100"
+                                            SmallChange="1"
+                                            LargeChange="5"
+                                            TickFrequency="5"
+                                            IsSnapToTickEnabled="False"
+                                            ValueChanged="OpacityMenuSlider_ValueChanged"/>
+                                    <TextBlock Text="100%" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                                </StackPanel>
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
+
+                    <Separator/>
+                    <MenuItem Header="ショートカット再読込"
+                              Click="ReloadMenuItem_Click"/>
+                    <MenuItem Header="終了"
+                              Click="ExitMenuItem_Click"/>
+                </ContextMenu>
+            </Border.ContextMenu>
+
+            <DockPanel LastChildFill="True">
+                <TextBlock Text="Shortcut HUD"
+                           VerticalAlignment="Center"
+                           Foreground="#FF274050"
+                           FontWeight="SemiBold"/>
+
+                <Button x:Name="PinButton"
+                        DockPanel.Dock="Right"
+                        Width="24"
+                        Height="20"
+                        Margin="8,0,0,0"
+                        Content="📍"
+                        ToolTip="ピン留め ON/OFF"
+                        Click="PinButton_Click"
+                        PreviewMouseLeftButtonDown="PinButton_PreviewMouseLeftButtonDown"/>
+            </DockPanel>
+        </Border>
+
+        <Popup x:Name="ShortcutPopup"
+               Placement="Bottom"
+               StaysOpen="True"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border x:Name="PopupRootBorder"
+                    Width="420"
+                    Background="#F2F8FB"
+                    BorderBrush="#FFB7C5D2"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="10"
+                    Opacity="0.95"
+                    MouseEnter="PopupRootBorder_MouseEnter"
+                    MouseLeave="PopupRootBorder_MouseLeave">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBox x:Name="SearchTextBox"
+                             Grid.Row="0"
+                             Height="28"
+                             Margin="0,0,0,8"
+                             VerticalContentAlignment="Center"
+                             TextChanged="SearchTextBox_TextChanged"
+                             ToolTip="name / keys / note を部分一致検索"/>
+
+                    <TextBlock x:Name="InfoTextBlock"
+                               Grid.Row="1"
+                               Margin="0,0,0,6"
+                               Foreground="#FFB04D00"
+                               Visibility="Collapsed"
+                               TextWrapping="Wrap"/>
+
+                    <ScrollViewer Grid.Row="2"
+                                  MaxHeight="420"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding DisplayCategories}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type models:ShortcutCategoryView}">
+                                    <Expander Header="{Binding Name}"
+                                              IsExpanded="True"
+                                              Margin="0,0,0,6"
+                                              Background="#FFF7FBFD">
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type models:ShortcutItem}">
+                                                    <Button Tag="{Binding}"
+                                                            Click="ShortcutItemButton_Click"
+                                                            Margin="0,1,0,1"
+                                                            Padding="6,4"
+                                                            Background="#00FFFFFF"
+                                                            BorderBrush="#00FFFFFF"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            ToolTip="クリックでキーをクリップボードへコピー">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="2*"/>
+                                                                <ColumnDefinition Width="1.2*"/>
+                                                                <ColumnDefinition Width="2*"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding Name}"
+                                                                       Foreground="#FF1E3340"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="0,0,8,0"/>
+
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding Keys}"
+                                                                       FontWeight="SemiBold"
+                                                                       Foreground="#FF0F5E83"
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       Margin="0,0,8,0"/>
+
+                                                            <TextBlock Grid.Column="2"
+                                                                       Text="{Binding Note}"
+                                                                       Foreground="#FF4A5D6A"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                        </Grid>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <StackPanel Grid.Row="3">
+                        <TextBlock x:Name="NoResultTextBlock"
+                                   Margin="0,6,0,0"
+                                   Text="一致する項目がありません。"
+                                   Foreground="#FF6A7D88"
+                                   Visibility="Collapsed"/>
+                        <TextBlock x:Name="StatusTextBlock"
+                                   Margin="0,6,0,0"
+                                   Foreground="#FF0C6E3A"
+                                   Visibility="Collapsed"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Popup>
+    </Grid>
+</Window>

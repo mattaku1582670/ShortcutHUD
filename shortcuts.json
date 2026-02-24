@@ -1,0 +1,17 @@
+﻿{
+  "categories": [
+    {
+      "name": "EHR",
+      "items": [
+        { "name": "患者検索", "keys": "Ctrl+F", "note": "検索窓にフォーカス" },
+        { "name": "前画面へ", "keys": "Alt+Left", "note": "" }
+      ]
+    },
+    {
+      "name": "Excel",
+      "items": [
+        { "name": "検索", "keys": "Ctrl+F", "note": "" }
+      ]
+    }
+  ]
+}
