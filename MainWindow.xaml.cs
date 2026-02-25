@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -11,12 +12,11 @@ using ShortcutHUD.Services;
 
 namespace ShortcutHUD;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Window, INotifyPropertyChanged
 {
     private readonly ShortcutDataService _shortcutDataService = new();
     private readonly SettingsService _settingsService = new();
     private readonly DispatcherTimer _closePopupTimer;
-    private readonly DispatcherTimer _statusTimer;
 
     private AppSettings _settings = AppSettings.CreateDefault();
     private ShortcutRoot _allShortcuts = new();
@@ -25,9 +25,27 @@ public partial class MainWindow : Window
     private bool _isPointerOverDetailPopup;
     private bool _isApplyingUiState;
     private bool _isStartupCompleted;
+    private string _selectedCategoryName = "Shortcuts";
 
     public ObservableCollection<ShortcutCategoryView> DisplayCategories { get; } = new();
     public ObservableCollection<ShortcutItem> CurrentCategoryItems { get; } = new();
+
+    public string SelectedCategoryName
+    {
+        get => _selectedCategoryName;
+        set
+        {
+            if (_selectedCategoryName == value)
+            {
+                return;
+            }
+
+            _selectedCategoryName = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCategoryName)));
+        }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     public MainWindow()
     {
@@ -39,12 +57,6 @@ public partial class MainWindow : Window
             Interval = TimeSpan.FromMilliseconds(200)
         };
         _closePopupTimer.Tick += ClosePopupTimer_Tick;
-
-        _statusTimer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(1600)
-        };
-        _statusTimer.Tick += StatusTimer_Tick;
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -84,9 +96,9 @@ public partial class MainWindow : Window
 
         UpdatePinState(_settings.IsPinned, persist: false);
 
-        if (OpacityMenuSlider != null)
+        if (HeaderOpacitySlider != null)
         {
-            OpacityMenuSlider.Value = clampedOpacity * 100.0;
+            HeaderOpacitySlider.Value = clampedOpacity * 100.0;
         }
     }
 
@@ -95,13 +107,7 @@ public partial class MainWindow : Window
         var result = _shortcutDataService.LoadFromExecutableFolder();
         _allShortcuts = result.Data;
         _dataErrorMessage = result.ErrorMessage ?? string.Empty;
-
         RebuildCategoryList();
-
-        if (!string.IsNullOrWhiteSpace(_dataErrorMessage))
-        {
-            ShowStatus("ショートカットデータの読込に失敗しました。");
-        }
     }
 
     private void RebuildCategoryList()
@@ -111,7 +117,6 @@ public partial class MainWindow : Window
         foreach (var category in _allShortcuts.Categories)
         {
             var itemsCopy = category.Items is null ? new List<ShortcutItem>() : new List<ShortcutItem>(category.Items);
-
             DisplayCategories.Add(new ShortcutCategoryView
             {
                 Name = category.Name,
@@ -138,11 +143,23 @@ public partial class MainWindow : Window
         CloseDetailPopup();
     }
 
+    private void SetCurrentCategory(ShortcutCategoryView category)
+    {
+        SelectedCategoryName = string.IsNullOrWhiteSpace(category.Name) ? "Shortcuts" : category.Name;
+        DetailHeaderTextBlock.Text = SelectedCategoryName;
+
+        CurrentCategoryItems.Clear();
+        foreach (var item in category.Items)
+        {
+            CurrentCategoryItems.Add(item);
+        }
+
+        NoDetailTextBlock.Visibility = CurrentCategoryItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void UpdatePinState(bool isPinned, bool persist)
     {
         _settings.IsPinned = isPinned;
-
-        PinButton.Content = isPinned ? "📌" : "📍";
         PinToggleMenuItem.Header = isPinned ? "ピン留め: ON" : "ピン留め: OFF";
 
         if (isPinned)
@@ -169,7 +186,7 @@ public partial class MainWindow : Window
     {
         DetailPopup.IsOpen = false;
         CurrentCategoryItems.Clear();
-        DetailHeaderTextBlock.Text = string.Empty;
+        DetailHeaderTextBlock.Text = "Shortcuts";
         NoDetailTextBlock.Visibility = Visibility.Collapsed;
     }
 
@@ -203,22 +220,6 @@ public partial class MainWindow : Window
         {
             CloseAllPopups();
         }
-    }
-
-    private void ShowStatus(string message)
-    {
-        StatusTextBlock.Text = message;
-        StatusTextBlock.Visibility = Visibility.Visible;
-
-        _statusTimer.Stop();
-        _statusTimer.Start();
-    }
-
-    private void StatusTimer_Tick(object? sender, EventArgs e)
-    {
-        _statusTimer.Stop();
-        StatusTextBlock.Visibility = Visibility.Collapsed;
-        StatusTextBlock.Text = string.Empty;
     }
 
     private void HeaderBorder_MouseEnter(object sender, MouseEventArgs e)
@@ -263,15 +264,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        CurrentCategoryItems.Clear();
-        foreach (var shortcut in category.Items)
-        {
-            CurrentCategoryItems.Add(shortcut);
-        }
-
-        DetailHeaderTextBlock.Text = category.Name;
-        NoDetailTextBlock.Visibility = CurrentCategoryItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-
+        SetCurrentCategory(category);
         DetailPopup.PlacementTarget = item;
         DetailPopup.IsOpen = true;
     }
@@ -294,7 +287,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.OriginalSource is DependencyObject source && FindAncestor<Button>(source) is not null)
+        if (e.OriginalSource is DependencyObject source && FindAncestor<Slider>(source) is not null)
         {
             return;
         }
@@ -327,31 +320,8 @@ public partial class MainWindow : Window
         return null;
     }
 
-    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    private void HeaderOpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        WindowState = WindowState.Minimized;
-    }
-
-    private void PinButton_Click(object sender, RoutedEventArgs e)
-    {
-        UpdatePinState(!_settings.IsPinned, persist: true);
-    }
-
-    private void PinToggleMenuItem_Click(object sender, RoutedEventArgs e)
-    {
-        UpdatePinState(!_settings.IsPinned, persist: true);
-    }
-
-    private void HudContextMenu_Opened(object sender, RoutedEventArgs e)
-    {
-        _isApplyingUiState = true;
-        OpacityMenuSlider.Value = Opacity * 100.0;
-        _isApplyingUiState = false;
-    }
-
-    private void OpacityMenuSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        // 起動直後の初期化中イベントでは設定を上書きしない
         if (_isApplyingUiState || !_isStartupCompleted)
         {
             return;
@@ -363,10 +333,14 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
+    private void PinToggleMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        UpdatePinState(!_settings.IsPinned, persist: true);
+    }
+
     private void ReloadMenuItem_Click(object sender, RoutedEventArgs e)
     {
         LoadShortcuts();
-        ShowStatus("ショートカットを再読込しました。");
     }
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
@@ -376,7 +350,6 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        // ポリシー: ピンON中は常時表示を優先するため Esc では閉じない
         if (e.Key == Key.Escape && CategoryPopup.IsOpen && !_settings.IsPinned)
         {
             CloseAllPopups();
@@ -392,12 +365,11 @@ public partial class MainWindow : Window
         }
     }
 
-    private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    private void Window_Closing(object? sender, CancelEventArgs e)
     {
         _settings.WindowLeft = Left;
         _settings.WindowTop = Top;
         _settings.Opacity = Opacity;
-
         SaveSettings();
     }
 
