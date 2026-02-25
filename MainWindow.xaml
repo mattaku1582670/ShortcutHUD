@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="ShortcutHUD"
         Icon="/AppIcon.ico"
-        Width="420"
+        Width="360"
         Height="58"
         Topmost="True"
         WindowStyle="None"
@@ -134,7 +134,7 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="CategoryPopupBorder"
-                    Width="280"
+                    Width="200"
                     Background="{StaticResource HudPanelBrush}"
                     BorderBrush="{StaticResource HudBorderBrush}"
                     BorderThickness="1"
@@ -249,7 +249,7 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="DetailPopupBorder"
-                    Width="420"
+                    Width="360"
                     Background="{StaticResource HudPanelBrush}"
                     BorderBrush="{StaticResource HudBorderBrush}"
                     BorderThickness="1"
