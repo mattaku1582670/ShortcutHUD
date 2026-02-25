@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:ShortcutHUD.Models"
         mc:Ignorable="d"
-        Title="ShortcutHUD"
-        Width="340"
-        Height="50"
+        Title="Shotcut HUD"
+        Icon="/AppIcon.ico"
+        Width="240"
+        Height="60"
         Topmost="True"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -67,7 +68,7 @@
 
             <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left"
-                           Text="Shortcut HUD"
+                           Text="Shotcut HUD"
                            VerticalAlignment="Center"
                            Foreground="#FF274050"
                            FontWeight="SemiBold"/>
@@ -100,7 +101,7 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="CategoryPopupBorder"
-                    Width="210"
+                    Width="150"
                     Background="#F2F8FB"
                     BorderBrush="#FFB7C5D2"
                     BorderThickness="1"
@@ -197,7 +198,7 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="DetailPopupBorder"
-                    Width="323"
+                    Width="300"
                     Background="#F7FBFD"
                     BorderBrush="#FFB7C5D2"
                     BorderThickness="1"
