@@ -24,6 +24,7 @@ public partial class MainWindow : Window
     private bool _isPointerOverCategoryPopup;
     private bool _isPointerOverDetailPopup;
     private bool _isApplyingUiState;
+    private bool _isStartupCompleted;
 
     public ObservableCollection<ShortcutCategoryView> DisplayCategories { get; } = new();
     public ObservableCollection<ShortcutItem> CurrentCategoryItems { get; } = new();
@@ -61,6 +62,8 @@ public partial class MainWindow : Window
         {
             OpenCategoryPopup();
         }
+
+        _isStartupCompleted = true;
     }
 
     private void ApplySettingsToWindow()
@@ -273,6 +276,17 @@ public partial class MainWindow : Window
         DetailPopup.IsOpen = true;
     }
 
+    private void CategoryListBoxItem_MouseLeave(object sender, MouseEventArgs e)
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!_isPointerOverDetailPopup && !CategoryPopupBorder.IsMouseOver)
+            {
+                CloseDetailPopup();
+            }
+        }, DispatcherPriority.Background);
+    }
+
     private void HeaderBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed)
@@ -337,7 +351,8 @@ public partial class MainWindow : Window
 
     private void OpacityMenuSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
     {
-        if (_isApplyingUiState)
+        // 起動直後の初期化中イベントでは設定を上書きしない
+        if (_isApplyingUiState || !_isStartupCompleted)
         {
             return;
         }
@@ -357,30 +372,6 @@ public partial class MainWindow : Window
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
     {
         Application.Current.Shutdown();
-    }
-
-    private void ShortcutItemButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is not Button button || button.Tag is not ShortcutItem item)
-        {
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(item.Keys))
-        {
-            ShowStatus("コピー対象のキーが空です。");
-            return;
-        }
-
-        try
-        {
-            Clipboard.SetText(item.Keys);
-            ShowStatus($"コピー: {item.Keys}");
-        }
-        catch
-        {
-            ShowStatus("クリップボードへのコピーに失敗しました。");
-        }
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

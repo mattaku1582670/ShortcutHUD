@@ -65,29 +65,31 @@
                 </ContextMenu>
             </Border.ContextMenu>
 
-            <DockPanel LastChildFill="True">
-                <TextBlock Text="Shortcut HUD"
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left"
+                           Text="Shortcut HUD"
                            VerticalAlignment="Center"
                            Foreground="#FF274050"
                            FontWeight="SemiBold"/>
 
                 <StackPanel Orientation="Horizontal"
-                            DockPanel.Dock="Right">
-                    <Button x:Name="MinimizeButton"
+                            DockPanel.Dock="Right"
+                            HorizontalAlignment="Right">
+                    <Button x:Name="PinButton"
                             Width="26"
                             Height="26"
                             Margin="0,0,6,0"
+                            Content="📍"
+                            ToolTip="ピン留め ON/OFF"
+                            Click="PinButton_Click"/>
+
+                    <Button x:Name="MinimizeButton"
+                            Width="26"
+                            Height="26"
                             Content="_"
                             FontWeight="Bold"
                             ToolTip="最小化"
                             Click="MinimizeButton_Click"/>
-
-                    <Button x:Name="PinButton"
-                            Width="26"
-                            Height="26"
-                            Content="📍"
-                            ToolTip="ピン留め ON/OFF"
-                            Click="PinButton_Click"/>
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -142,6 +144,7 @@
                                         <Setter Property="Padding" Value="0"/>
                                         <Setter Property="Margin" Value="0,1,0,1"/>
                                         <EventSetter Event="MouseEnter" Handler="CategoryListBoxItem_MouseEnter"/>
+                                        <EventSetter Event="MouseLeave" Handler="CategoryListBoxItem_MouseLeave"/>
                                     </Style>
                                 </ListBox.ItemContainerStyle>
                                 <ListBox.ItemTemplate>
@@ -194,7 +197,7 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="DetailPopupBorder"
-                    Width="430"
+                    Width="323"
                     Background="#F7FBFD"
                     BorderBrush="#FFB7C5D2"
                     BorderThickness="1"
@@ -222,19 +225,15 @@
                             <ItemsControl ItemsSource="{Binding CurrentCategoryItems}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type models:ShortcutItem}">
-                                        <Button Tag="{Binding}"
-                                                Click="ShortcutItemButton_Click"
-                                                Margin="0,1,0,1"
+                                        <Border Margin="0,1,0,1"
                                                 Padding="6,4"
+                                                CornerRadius="4"
                                                 Background="#00FFFFFF"
-                                                BorderBrush="#00FFFFFF"
-                                                HorizontalContentAlignment="Stretch"
-                                                ToolTip="クリックでキーをクリップボードへコピー">
+                                                ToolTip="{Binding Note}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="2*"/>
-                                                    <ColumnDefinition Width="1.2*"/>
-                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="2.4*"/>
+                                                    <ColumnDefinition Width="1.4*"/>
                                                 </Grid.ColumnDefinitions>
 
                                                 <TextBlock Grid.Column="0"
@@ -247,15 +246,9 @@
                                                            Text="{Binding Keys}"
                                                            FontWeight="SemiBold"
                                                            Foreground="#FF0F5E83"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           Margin="0,0,8,0"/>
-
-                                                <TextBlock Grid.Column="2"
-                                                           Text="{Binding Note}"
-                                                           Foreground="#FF4A5D6A"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </Grid>
-                                        </Button>
+                                        </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
