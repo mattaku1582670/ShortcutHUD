@@ -6,22 +6,23 @@
         xmlns:models="clr-namespace:ShortcutHUD.Models"
         mc:Ignorable="d"
         Title="ShortcutHUD"
-        Width="320"
-        Height="34"
+        Width="340"
+        Height="50"
         Topmost="True"
         WindowStyle="None"
         ResizeMode="NoResize"
         AllowsTransparency="True"
         Background="Transparent"
-        ShowInTaskbar="False"
+        ShowInTaskbar="True"
         Loaded="Window_Loaded"
         Closing="Window_Closing"
+        StateChanged="Window_StateChanged"
         PreviewKeyDown="Window_PreviewKeyDown">
 
     <Grid Margin="6">
         <Border x:Name="HeaderBorder"
                 CornerRadius="8"
-                Padding="10,4"
+                Padding="10,7"
                 Background="#E6DDE6EC"
                 BorderBrush="#FFB7C5D2"
                 BorderThickness="1"
@@ -70,33 +71,42 @@
                            Foreground="#FF274050"
                            FontWeight="SemiBold"/>
 
-                <Button x:Name="PinButton"
-                        DockPanel.Dock="Right"
-                        Width="24"
-                        Height="20"
-                        Margin="8,0,0,0"
-                        Content="📍"
-                        ToolTip="ピン留め ON/OFF"
-                        Click="PinButton_Click"
-                        PreviewMouseLeftButtonDown="PinButton_PreviewMouseLeftButtonDown"/>
+                <StackPanel Orientation="Horizontal"
+                            DockPanel.Dock="Right">
+                    <Button x:Name="MinimizeButton"
+                            Width="26"
+                            Height="26"
+                            Margin="0,0,6,0"
+                            Content="_"
+                            FontWeight="Bold"
+                            ToolTip="最小化"
+                            Click="MinimizeButton_Click"/>
+
+                    <Button x:Name="PinButton"
+                            Width="26"
+                            Height="26"
+                            Content="📍"
+                            ToolTip="ピン留め ON/OFF"
+                            Click="PinButton_Click"/>
+                </StackPanel>
             </DockPanel>
         </Border>
 
-        <Popup x:Name="ShortcutPopup"
+        <Popup x:Name="CategoryPopup"
                Placement="Bottom"
                StaysOpen="True"
                AllowsTransparency="True"
                PopupAnimation="Fade">
-            <Border x:Name="PopupRootBorder"
-                    Width="420"
+            <Border x:Name="CategoryPopupBorder"
+                    Width="210"
                     Background="#F2F8FB"
                     BorderBrush="#FFB7C5D2"
                     BorderThickness="1"
                     CornerRadius="10"
                     Padding="10"
                     Opacity="0.95"
-                    MouseEnter="PopupRootBorder_MouseEnter"
-                    MouseLeave="PopupRootBorder_MouseLeave">
+                    MouseEnter="CategoryPopupBorder_MouseEnter"
+                    MouseLeave="CategoryPopupBorder_MouseLeave">
 
                 <Grid>
                     <Grid.RowDefinitions>
@@ -106,13 +116,11 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBox x:Name="SearchTextBox"
-                             Grid.Row="0"
-                             Height="28"
-                             Margin="0,0,0,8"
-                             VerticalContentAlignment="Center"
-                             TextChanged="SearchTextBox_TextChanged"
-                             ToolTip="name / keys / note を部分一致検索"/>
+                    <TextBlock Grid.Row="0"
+                               Text="カテゴリ"
+                               Foreground="#FF1E3340"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,6"/>
 
                     <TextBlock x:Name="InfoTextBlock"
                                Grid.Row="1"
@@ -121,75 +129,149 @@
                                Visibility="Collapsed"
                                TextWrapping="Wrap"/>
 
-                    <ScrollViewer Grid.Row="2"
-                                  MaxHeight="420"
-                                  VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding DisplayCategories}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type models:ShortcutCategoryView}">
-                                    <Expander Header="{Binding Name}"
-                                              IsExpanded="True"
-                                              Margin="0,0,0,6"
-                                              Background="#FFF7FBFD">
-                                        <ItemsControl ItemsSource="{Binding Items}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type models:ShortcutItem}">
-                                                    <Button Tag="{Binding}"
-                                                            Click="ShortcutItemButton_Click"
-                                                            Margin="0,1,0,1"
-                                                            Padding="6,4"
-                                                            Background="#00FFFFFF"
-                                                            BorderBrush="#00FFFFFF"
-                                                            HorizontalContentAlignment="Stretch"
-                                                            ToolTip="クリックでキーをクリップボードへコピー">
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="2*"/>
-                                                                <ColumnDefinition Width="1.2*"/>
-                                                                <ColumnDefinition Width="2*"/>
-                                                            </Grid.ColumnDefinitions>
+                    <Grid Grid.Row="2">
+                        <ScrollViewer MaxHeight="380"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ListBox x:Name="CategoryListBox"
+                                     ItemsSource="{Binding DisplayCategories}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     HorizontalContentAlignment="Stretch">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0,1,0,1"/>
+                                        <EventSetter Event="MouseEnter" Handler="CategoryListBoxItem_MouseEnter"/>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:ShortcutCategoryView}">
+                                        <Border Padding="8,6"
+                                                CornerRadius="6"
+                                                Background="#00FFFFFF">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                                            <TextBlock Grid.Column="0"
-                                                                       Text="{Binding Name}"
-                                                                       Foreground="#FF1E3340"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="0,0,8,0"/>
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Name}"
+                                                           Foreground="#FF1E3340"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1"
+                                                           Text=">"
+                                                           Foreground="#FF567080"
+                                                           FontWeight="Bold"
+                                                           Margin="8,0,0,0"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </ScrollViewer>
 
-                                                            <TextBlock Grid.Column="1"
-                                                                       Text="{Binding Keys}"
-                                                                       FontWeight="SemiBold"
-                                                                       Foreground="#FF0F5E83"
-                                                                       TextTrimming="CharacterEllipsis"
-                                                                       Margin="0,0,8,0"/>
-
-                                                            <TextBlock Grid.Column="2"
-                                                                       Text="{Binding Note}"
-                                                                       Foreground="#FF4A5D6A"
-                                                                       TextTrimming="CharacterEllipsis"/>
-                                                        </Grid>
-                                                    </Button>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                    </Expander>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
-
-                    <StackPanel Grid.Row="3">
-                        <TextBlock x:Name="NoResultTextBlock"
-                                   Margin="0,6,0,0"
-                                   Text="一致する項目がありません。"
+                        <TextBlock x:Name="NoCategoryTextBlock"
+                                   Text="表示できるカテゴリがありません。"
                                    Foreground="#FF6A7D88"
-                                   Visibility="Collapsed"/>
-                        <TextBlock x:Name="StatusTextBlock"
-                                   Margin="0,6,0,0"
-                                   Foreground="#FF0C6E3A"
-                                   Visibility="Collapsed"/>
-                    </StackPanel>
+                                   Visibility="Collapsed"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <TextBlock x:Name="StatusTextBlock"
+                               Grid.Row="3"
+                               Margin="0,6,0,0"
+                               Foreground="#FF0C6E3A"
+                               Visibility="Collapsed"/>
+                </Grid>
+            </Border>
+        </Popup>
+
+        <Popup x:Name="DetailPopup"
+               Placement="Right"
+               StaysOpen="True"
+               AllowsTransparency="True"
+               PopupAnimation="Fade">
+            <Border x:Name="DetailPopupBorder"
+                    Width="430"
+                    Background="#F7FBFD"
+                    BorderBrush="#FFB7C5D2"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="10"
+                    Opacity="0.95"
+                    MouseEnter="DetailPopupBorder_MouseEnter"
+                    MouseLeave="DetailPopupBorder_MouseLeave">
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock x:Name="DetailHeaderTextBlock"
+                               Grid.Row="0"
+                               Foreground="#FF1E3340"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,6"/>
+
+                    <Grid Grid.Row="1">
+                        <ScrollViewer MaxHeight="380"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding CurrentCategoryItems}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type models:ShortcutItem}">
+                                        <Button Tag="{Binding}"
+                                                Click="ShortcutItemButton_Click"
+                                                Margin="0,1,0,1"
+                                                Padding="6,4"
+                                                Background="#00FFFFFF"
+                                                BorderBrush="#00FFFFFF"
+                                                HorizontalContentAlignment="Stretch"
+                                                ToolTip="クリックでキーをクリップボードへコピー">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="2*"/>
+                                                    <ColumnDefinition Width="1.2*"/>
+                                                    <ColumnDefinition Width="2*"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding Name}"
+                                                           Foreground="#FF1E3340"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="0,0,8,0"/>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding Keys}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="#FF0F5E83"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Margin="0,0,8,0"/>
+
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding Note}"
+                                                           Foreground="#FF4A5D6A"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <TextBlock x:Name="NoDetailTextBlock"
+                                   Text="ショートカットがありません。"
+                                   Foreground="#FF6A7D88"
+                                   Visibility="Collapsed"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Grid>
                 </Grid>
             </Border>
         </Popup>
     </Grid>
 </Window>
+
+

@@ -38,7 +38,7 @@ public sealed class ShortcutCategoryView
 
 public sealed class AppSettings
 {
-    public double Opacity { get; set; } = 0.92;
+    public double Opacity { get; set; } = 0.50;
     public bool IsPinned { get; set; } = false;
     public double WindowLeft { get; set; } = 60;
     public double WindowTop { get; set; } = 60;

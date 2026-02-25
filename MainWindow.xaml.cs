@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using ShortcutHUD.Models;
 using ShortcutHUD.Services;
@@ -20,10 +21,12 @@ public partial class MainWindow : Window
     private AppSettings _settings = AppSettings.CreateDefault();
     private ShortcutRoot _allShortcuts = new();
     private string _dataErrorMessage = string.Empty;
-    private bool _isPointerOverPopup;
+    private bool _isPointerOverCategoryPopup;
+    private bool _isPointerOverDetailPopup;
     private bool _isApplyingUiState;
 
     public ObservableCollection<ShortcutCategoryView> DisplayCategories { get; } = new();
+    public ObservableCollection<ShortcutItem> CurrentCategoryItems { get; } = new();
 
     public MainWindow()
     {
@@ -45,7 +48,7 @@ public partial class MainWindow : Window
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        ShortcutPopup.PlacementTarget = this;
+        CategoryPopup.PlacementTarget = this;
 
         _isApplyingUiState = true;
         _settings = _settingsService.Load();
@@ -56,7 +59,7 @@ public partial class MainWindow : Window
 
         if (_settings.IsPinned)
         {
-            OpenPopup();
+            OpenCategoryPopup();
         }
     }
 
@@ -90,7 +93,7 @@ public partial class MainWindow : Window
         _allShortcuts = result.Data;
         _dataErrorMessage = result.ErrorMessage ?? string.Empty;
 
-        ApplyFilter();
+        RebuildCategoryList();
 
         if (!string.IsNullOrWhiteSpace(_dataErrorMessage))
         {
@@ -98,27 +101,18 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyFilter()
+    private void RebuildCategoryList()
     {
-        var query = (SearchTextBox.Text ?? string.Empty).Trim();
-
         DisplayCategories.Clear();
 
         foreach (var category in _allShortcuts.Categories)
         {
-            var matchedItems = category.Items
-                .Where(item => IsMatch(item, query))
-                .ToList();
-
-            if (matchedItems.Count == 0)
-            {
-                continue;
-            }
+            var itemsCopy = category.Items is null ? new List<ShortcutItem>() : new List<ShortcutItem>(category.Items);
 
             DisplayCategories.Add(new ShortcutCategoryView
             {
                 Name = category.Name,
-                Items = matchedItems
+                Items = itemsCopy
             });
         }
 
@@ -133,28 +127,12 @@ public partial class MainWindow : Window
             InfoTextBlock.Visibility = Visibility.Collapsed;
         }
 
-        NoResultTextBlock.Visibility =
+        NoCategoryTextBlock.Visibility =
             DisplayCategories.Count == 0 && string.IsNullOrWhiteSpace(_dataErrorMessage)
                 ? Visibility.Visible
                 : Visibility.Collapsed;
-    }
 
-    private static bool IsMatch(ShortcutItem item, string query)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            return true;
-        }
-
-        return ContainsIgnoreCase(item.Name, query)
-               || ContainsIgnoreCase(item.Keys, query)
-               || ContainsIgnoreCase(item.Note, query);
-    }
-
-    private static bool ContainsIgnoreCase(string? source, string value)
-    {
-        return !string.IsNullOrWhiteSpace(source)
-               && source.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
+        CloseDetailPopup();
     }
 
     private void UpdatePinState(bool isPinned, bool persist)
@@ -166,7 +144,7 @@ public partial class MainWindow : Window
 
         if (isPinned)
         {
-            OpenPopup();
+            OpenCategoryPopup();
         }
         else
         {
@@ -179,14 +157,23 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OpenPopup()
+    private void OpenCategoryPopup()
     {
-        ShortcutPopup.IsOpen = true;
+        CategoryPopup.IsOpen = true;
     }
 
-    private void ClosePopup()
+    private void CloseDetailPopup()
     {
-        ShortcutPopup.IsOpen = false;
+        DetailPopup.IsOpen = false;
+        CurrentCategoryItems.Clear();
+        DetailHeaderTextBlock.Text = string.Empty;
+        NoDetailTextBlock.Visibility = Visibility.Collapsed;
+    }
+
+    private void CloseAllPopups()
+    {
+        CloseDetailPopup();
+        CategoryPopup.IsOpen = false;
     }
 
     private void SchedulePopupClose()
@@ -209,9 +196,9 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (!HeaderBorder.IsMouseOver && !_isPointerOverPopup)
+        if (!HeaderBorder.IsMouseOver && !_isPointerOverCategoryPopup && !_isPointerOverDetailPopup)
         {
-            ClosePopup();
+            CloseAllPopups();
         }
     }
 
@@ -234,7 +221,7 @@ public partial class MainWindow : Window
     private void HeaderBorder_MouseEnter(object sender, MouseEventArgs e)
     {
         _closePopupTimer.Stop();
-        OpenPopup();
+        OpenCategoryPopup();
     }
 
     private void HeaderBorder_MouseLeave(object sender, MouseEventArgs e)
@@ -242,21 +229,58 @@ public partial class MainWindow : Window
         SchedulePopupClose();
     }
 
-    private void PopupRootBorder_MouseEnter(object sender, MouseEventArgs e)
+    private void CategoryPopupBorder_MouseEnter(object sender, MouseEventArgs e)
     {
-        _isPointerOverPopup = true;
+        _isPointerOverCategoryPopup = true;
         _closePopupTimer.Stop();
     }
 
-    private void PopupRootBorder_MouseLeave(object sender, MouseEventArgs e)
+    private void CategoryPopupBorder_MouseLeave(object sender, MouseEventArgs e)
     {
-        _isPointerOverPopup = false;
+        _isPointerOverCategoryPopup = false;
         SchedulePopupClose();
+    }
+
+    private void DetailPopupBorder_MouseEnter(object sender, MouseEventArgs e)
+    {
+        _isPointerOverDetailPopup = true;
+        _closePopupTimer.Stop();
+    }
+
+    private void DetailPopupBorder_MouseLeave(object sender, MouseEventArgs e)
+    {
+        _isPointerOverDetailPopup = false;
+        SchedulePopupClose();
+    }
+
+    private void CategoryListBoxItem_MouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is not ListBoxItem item || item.DataContext is not ShortcutCategoryView category)
+        {
+            return;
+        }
+
+        CurrentCategoryItems.Clear();
+        foreach (var shortcut in category.Items)
+        {
+            CurrentCategoryItems.Add(shortcut);
+        }
+
+        DetailHeaderTextBlock.Text = category.Name;
+        NoDetailTextBlock.Visibility = CurrentCategoryItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        DetailPopup.PlacementTarget = item;
+        DetailPopup.IsOpen = true;
     }
 
     private void HeaderBorder_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        if (e.OriginalSource is DependencyObject source && FindAncestor<Button>(source) is not null)
         {
             return;
         }
@@ -273,9 +297,25 @@ public partial class MainWindow : Window
         }
     }
 
-    private void PinButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private static T? FindAncestor<T>(DependencyObject? child) where T : DependencyObject
     {
-        e.Handled = true;
+        var current = child;
+        while (current is not null)
+        {
+            if (current is T match)
+            {
+                return match;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return null;
+    }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
     }
 
     private void PinButton_Click(object sender, RoutedEventArgs e)
@@ -319,11 +359,6 @@ public partial class MainWindow : Window
         Application.Current.Shutdown();
     }
 
-    private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        ApplyFilter();
-    }
-
     private void ShortcutItemButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not Button button || button.Tag is not ShortcutItem item)
@@ -351,10 +386,18 @@ public partial class MainWindow : Window
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
         // ポリシー: ピンON中は常時表示を優先するため Esc では閉じない
-        if (e.Key == Key.Escape && ShortcutPopup.IsOpen && !_settings.IsPinned)
+        if (e.Key == Key.Escape && CategoryPopup.IsOpen && !_settings.IsPinned)
         {
-            ClosePopup();
+            CloseAllPopups();
             e.Handled = true;
+        }
+    }
+
+    private void Window_StateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            CloseAllPopups();
         }
     }
 
