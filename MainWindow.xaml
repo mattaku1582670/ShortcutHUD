@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:ShortcutHUD.Models"
         mc:Ignorable="d"
-        Title="Shotcut HUD"
+        Title="MIMショートカットキー"
         Icon="/AppIcon.ico"
-        Width="240"
+        Width="220"
         Height="60"
         Topmost="True"
         WindowStyle="None"
@@ -68,7 +68,7 @@
 
             <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left"
-                           Text="Shotcut HUD"
+                           Text="MIMショートカットキー"
                            VerticalAlignment="Center"
                            Foreground="#FF274050"
                            FontWeight="SemiBold"/>
