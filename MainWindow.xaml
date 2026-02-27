@@ -106,6 +106,21 @@
                             Minimum="20"
                             Maximum="100"
                             ValueChanged="HeaderOpacitySlider_ValueChanged"/>
+                    <Button x:Name="MinimizeButton"
+                            Width="24"
+                            Height="22"
+                            Margin="8,0,0,0"
+                            Background="#E7EDF2"
+                            BorderBrush="{StaticResource HudBorderBrush}"
+                            BorderThickness="1"
+                            Click="MinimizeButton_Click">
+                        <TextBlock Text="&#xE921;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   Foreground="{StaticResource HudTextBrush}"
+                                   FontSize="10"
+                                   VerticalAlignment="Center"
+                                   HorizontalAlignment="Center"/>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Border>

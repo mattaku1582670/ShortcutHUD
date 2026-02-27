@@ -287,7 +287,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
 
-        if (e.OriginalSource is DependencyObject source && FindAncestor<Slider>(source) is not null)
+        if (e.OriginalSource is DependencyObject source &&
+            (FindAncestor<Slider>(source) is not null || FindAncestor<Button>(source) is not null))
         {
             return;
         }
@@ -331,6 +332,11 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Opacity = newOpacity;
         _settings.Opacity = newOpacity;
         SaveSettings();
+    }
+
+    private void MinimizeButton_Click(object sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
     }
 
     private void PinToggleMenuItem_Click(object sender, RoutedEventArgs e)
