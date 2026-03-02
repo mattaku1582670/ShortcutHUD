@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:ShortcutHUD.Models"
         mc:Ignorable="d"
-        Title="ShortcutHUD"
+        Title="{Binding HeaderText}"
         Icon="/AppIcon.ico"
         Width="330"
         Height="58"
