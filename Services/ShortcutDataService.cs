@@ -41,6 +41,7 @@ public sealed class ShortcutDataService
                 };
             }
 
+            data.HeaderText = string.IsNullOrWhiteSpace(data.HeaderText) ? "Shortcut Key" : data.HeaderText;
             data.Categories ??= new();
 
             foreach (var category in data.Categories)

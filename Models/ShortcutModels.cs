@@ -5,6 +5,9 @@ namespace ShortcutHUD.Models;
 
 public sealed class ShortcutRoot
 {
+    [JsonPropertyName("headerText")]
+    public string HeaderText { get; set; } = "Shortcut Key";
+
     [JsonPropertyName("categories")]
     public List<ShortcutCategory> Categories { get; set; } = new();
 }

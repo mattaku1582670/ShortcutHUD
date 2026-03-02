@@ -25,6 +25,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _isPointerOverDetailPopup;
     private bool _isApplyingUiState;
     private bool _isStartupCompleted;
+    private string _headerText = "Shortcut Key";
     private string _selectedCategoryName = "Shortcuts";
 
     public ObservableCollection<ShortcutCategoryView> DisplayCategories { get; } = new();
@@ -42,6 +43,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
             _selectedCategoryName = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedCategoryName)));
+        }
+    }
+
+    public string HeaderText
+    {
+        get => _headerText;
+        set
+        {
+            if (_headerText == value)
+            {
+                return;
+            }
+
+            _headerText = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HeaderText)));
         }
     }
 
@@ -106,6 +122,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var result = _shortcutDataService.LoadFromExecutableFolder();
         _allShortcuts = result.Data;
+        HeaderText = string.IsNullOrWhiteSpace(_allShortcuts.HeaderText) ? "Shortcut Key" : _allShortcuts.HeaderText;
         _dataErrorMessage = result.ErrorMessage ?? string.Empty;
         RebuildCategoryList();
     }

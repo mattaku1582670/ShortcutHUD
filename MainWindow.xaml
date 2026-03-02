@@ -54,7 +54,7 @@
                               Header="ピン留め: OFF"
                               Click="PinToggleMenuItem_Click"/>
                     <Separator/>
-                    <MenuItem Header="ショートカット再読込"
+                    <MenuItem Header="再読込（更新時）"
                               Click="ReloadMenuItem_Click"/>
                     <MenuItem Header="終了"
                               Click="ExitMenuItem_Click"/>
@@ -90,7 +90,7 @@
                            Foreground="{StaticResource HudTextBrush}"
                            FontSize="13"
                            FontWeight="SemiBold"
-                           Text="Shortcut Key"/>
+                           Text="{Binding HeaderText}"/>
 
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
