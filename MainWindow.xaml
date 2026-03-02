@@ -95,7 +95,7 @@
                 <StackPanel Grid.Column="2"
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
-                    <TextBlock Text="&#xE722;"
+                    <TextBlock Text="&#xE7B3;"
                                FontFamily="Segoe MDL2 Assets"
                                Foreground="{StaticResource HudTextBrush}"
                                FontSize="14"
