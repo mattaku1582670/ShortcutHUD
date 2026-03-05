@@ -279,7 +279,8 @@
                AllowsTransparency="True"
                PopupAnimation="Fade">
             <Border x:Name="DetailPopupBorder"
-                    Width="320"
+                    Width="Auto"
+                    MinWidth="320"
                     Background="{StaticResource HudPanelBrush}"
                     BorderBrush="{StaticResource HudBorderBrush}"
                     BorderThickness="1"
@@ -315,19 +316,20 @@
                             BorderBrush="{StaticResource HudBorderBrush}"
                             BorderThickness="1">
                         <Grid>
-                            <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto">
-                                <ItemsControl ItemsSource="{Binding CurrentCategoryItems}" Padding="8">
+                            <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding CurrentCategoryItems}" Padding="5" HorizontalAlignment="Stretch">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type models:ShortcutItem}">
                                             <Border Margin="0,3,0,3"
-                                                    Padding="8,7"
+                                                    HorizontalAlignment="Stretch"
+                                                    Padding="8,3"
                                                     CornerRadius="8"
                                                     Background="#EDF2F6"
                                                     ToolTip="{Binding Note}">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="2.4*"/>
-                                                        <ColumnDefinition Width="1.4*"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
 
                                                     <TextBlock Grid.Column="0"
@@ -357,8 +359,7 @@
                                                                    Foreground="{StaticResource HudTextBrush}"
                                                                    FontWeight="Bold"
                                                                     FontSize="{DynamicResource UiFontSizeMd}"
-                                                                   VerticalAlignment="Center"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                                                   VerticalAlignment="Center"/>
                                                     </Grid>
                                                 </Grid>
                                             </Border>
