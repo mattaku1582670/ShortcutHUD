@@ -14,6 +14,14 @@ namespace ShortcutHUD;
 
 public partial class MainWindow : Window, INotifyPropertyChanged
 {
+    private const double MinUiFontSize = 10;
+    private const double MaxUiFontSize = 20;
+    private const double DefaultUiFontSize = 12;
+    private const double DefaultWindowHeight = 58;
+    private const double MinWindowHeightLowerBound = 44;
+    private const double MinWindowHeightDefault = 52;
+    private const double MaxWindowHeight = 180;
+
     private readonly ShortcutDataService _shortcutDataService = new();
     private readonly SettingsService _settingsService = new();
     private readonly DispatcherTimer _closePopupTimer;
@@ -109,6 +117,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var clampedOpacity = Math.Clamp(_settings.Opacity, 0.2, 1.0);
         Opacity = clampedOpacity;
         _settings.Opacity = clampedOpacity;
+        ApplyTypographyAndWindowSize();
 
         UpdatePinState(_settings.IsPinned, persist: false);
 
@@ -116,6 +125,53 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         {
             HeaderOpacitySlider.Value = clampedOpacity * 100.0;
         }
+    }
+
+    private void ApplyTypographyAndWindowSize()
+    {
+        var baseFontSize = Math.Clamp(_settings.UiFontSize, MinUiFontSize, MaxUiFontSize);
+        var minHeight = Math.Clamp(_settings.MinWindowHeight, MinWindowHeightLowerBound, MaxWindowHeight);
+
+        _settings.UiFontSize = baseFontSize;
+        _settings.MinWindowHeight = minHeight;
+
+        SetWindowResourceValue("UiFontSizeXs", Math.Max(8, baseFontSize - 2));
+        SetWindowResourceValue("UiFontSizeSm", Math.Max(9, baseFontSize - 1));
+        SetWindowResourceValue("UiFontSizeMd", baseFontSize);
+        SetWindowResourceValue("UiFontSizeLg", Math.Min(22, baseFontSize + 1));
+        SetWindowResourceValue("UiFontSizeXl", Math.Min(24, baseFontSize + 2));
+
+        MinHeight = minHeight;
+        var computedHeight = DefaultWindowHeight + ((baseFontSize - DefaultUiFontSize) * 4.0);
+        Height = Math.Clamp(computedHeight, minHeight, MaxWindowHeight);
+
+        if (FontSizeCurrentMenuItem != null)
+        {
+            FontSizeCurrentMenuItem.Header = $"{baseFontSize:0.#} px";
+        }
+    }
+
+    private void SetWindowResourceValue(string key, double value)
+    {
+        if (!Resources.Contains(key))
+        {
+            return;
+        }
+
+        Resources[key] = value;
+    }
+
+    private void ChangeUiFontSize(double delta)
+    {
+        var next = Math.Clamp(_settings.UiFontSize + delta, MinUiFontSize, MaxUiFontSize);
+        if (Math.Abs(next - _settings.UiFontSize) < double.Epsilon)
+        {
+            return;
+        }
+
+        _settings.UiFontSize = next;
+        ApplyTypographyAndWindowSize();
+        SaveSettings();
     }
 
     private void LoadShortcuts()
@@ -369,6 +425,24 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
     {
         Application.Current.Shutdown();
+    }
+
+    private void FontSizeDownMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        ChangeUiFontSize(-1);
+    }
+
+    private void FontSizeUpMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        ChangeUiFontSize(1);
+    }
+
+    private void FontSizeResetMenuItem_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.UiFontSize = DefaultUiFontSize;
+        _settings.MinWindowHeight = MinWindowHeightDefault;
+        ApplyTypographyAndWindowSize();
+        SaveSettings();
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
