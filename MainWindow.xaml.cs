@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -85,7 +86,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        CategoryPopup.PlacementTarget = this;
+        CategoryPopup.PlacementTarget = HeaderBorder;
 
         _isApplyingUiState = true;
         _settings = _settingsService.Load();
@@ -100,6 +101,29 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         }
 
         _isStartupCompleted = true;
+    }
+
+    private CustomPopupPlacement[] CategoryPopup_CustomPopupPlacement(Size popupSize, Size targetSize, Point offset)
+    {
+        const double verticalGap = 6;
+        return
+        [
+            new CustomPopupPlacement(new Point(0, targetSize.Height + verticalGap), PopupPrimaryAxis.Horizontal),
+            new CustomPopupPlacement(
+                new Point(Math.Max(0, targetSize.Width - popupSize.Width), targetSize.Height + verticalGap),
+                PopupPrimaryAxis.Horizontal)
+        ];
+    }
+
+    private CustomPopupPlacement[] DetailPopup_CustomPopupPlacement(Size popupSize, Size targetSize, Point offset)
+    {
+        const double horizontalGap = 8;
+        const double verticalOffset = -6;
+        return
+        [
+            new CustomPopupPlacement(new Point(targetSize.Width + horizontalGap, verticalOffset), PopupPrimaryAxis.Horizontal),
+            new CustomPopupPlacement(new Point(-popupSize.Width - horizontalGap, verticalOffset), PopupPrimaryAxis.Horizontal)
+        ];
     }
 
     private void ApplySettingsToWindow()
