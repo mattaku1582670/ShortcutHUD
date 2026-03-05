@@ -45,6 +45,8 @@ public sealed class AppSettings
     public bool IsPinned { get; set; } = false;
     public double WindowLeft { get; set; } = 60;
     public double WindowTop { get; set; } = 60;
+    public double UiFontSize { get; set; } = 12;
+    public double MinWindowHeight { get; set; } = 52;
 
     public static AppSettings CreateDefault()
     {
