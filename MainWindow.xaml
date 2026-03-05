@@ -157,7 +157,8 @@
         </Border> -->
 
         <Popup x:Name="CategoryPopup"
-               Placement="Bottom"
+               Placement="Custom"
+               CustomPopupPlacementCallback="CategoryPopup_CustomPopupPlacement"
                StaysOpen="True"
                AllowsTransparency="True"
                PopupAnimation="Fade">
@@ -272,7 +273,8 @@
         </Popup>
 
         <Popup x:Name="DetailPopup"
-               Placement="Right"
+               Placement="Custom"
+               CustomPopupPlacementCallback="DetailPopup_CustomPopupPlacement"
                StaysOpen="True"
                AllowsTransparency="True"
                PopupAnimation="Fade">
